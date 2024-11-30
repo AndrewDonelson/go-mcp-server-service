@@ -1,6 +1,8 @@
 # go-mcp-server-service
 A JSON-RPC 2.0 compliant server implementing the Model Context Protocol (MCP) for note management (as an example)
 
+This is an example. You can modify this and use as a Boilerplate for your own project. It supports cross-platform development and includes a command-line interface and service component for both development and release builds.
+
 ## Features
 
 - JSON-RPC 2.0 compliant API
@@ -22,6 +24,7 @@ The service component enables system-level integration and background operation.
 ### Resources
 
 The server implements a note storage system with:
+
 - Custom `note://` URI scheme for accessing individual notes
 - Resource metadata including name, description, and MIME type
 - Thread-safe concurrent access
@@ -29,6 +32,7 @@ The server implements a note storage system with:
 ### Prompts
 
 Available prompts:
+
 - `summarize-notes`: Creates summaries of all stored notes
   - Optional `style` argument ("brief"/"detailed")
   - Combines all current notes with style preference
@@ -37,6 +41,7 @@ Available prompts:
 ### Tools
 
 Available tools:
+
 - `add-note`: Adds a new note to the server
   - Required arguments: `name` (string), `content` (string)
   - Thread-safe state updates
@@ -53,6 +58,7 @@ Available tools:
 ### Build Commands
 
 Development builds (includes debug symbols and race detection):
+
 ```bash
 # Build all components for all platforms
 make dev
@@ -68,6 +74,7 @@ make build-service
 ```
 
 Release builds (optimized and stripped):
+
 ```bash
 # Build all components for all platforms
 make release-all
@@ -79,6 +86,7 @@ make release-darwin
 ```
 
 Run locally:
+
 ```bash
 # Run command-line interface
 make run-cmd
@@ -88,6 +96,7 @@ make run-service
 ```
 
 View all available targets:
+
 ```bash
 make help
 ```
@@ -95,6 +104,7 @@ make help
 ### Build Output
 
 Binaries are created in the `bin` directory:
+
 - Development builds: `bin/dev/<platform>/`
 - Release builds: `bin/release/<platform>/`
 
@@ -105,6 +115,7 @@ Binaries are created in the `bin` directory:
 Configure the notes server in Claude Desktop's configuration file:
 
 #### Location
+
 - MacOS: `~/Library/Application\ Support/Claude/claude_desktop_config.json`
 - Windows: `%APPDATA%/Claude/claude_desktop_config.json`
 
