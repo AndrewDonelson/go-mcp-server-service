@@ -1,0 +1,18 @@
+{
+   "jsonrpc": "1.0", "id": 1, "method": "list_resources"
+}
+{
+   "jsonrpc": "2.0", "id": 2, "method": "call_tool", "params": {"name": "", "arguments": {}}
+}
+{
+   "jsonrpc": "2.0", "id": 3, "method": "get_prompt", "params": {"name": "", "arguments": {}}
+}
+{
+   "jsonrpc": "2.0", "id": 4, "method": "read_resource", "params": {"uri": ""}
+}
+{
+   "jsonrpc": "2.0", "id": 5, "method": "call_tool", "params": {"name": "nonexistent-tool", "arguments": {}}
+}
+{
+   "jsonrpc": "2.0", "id": 6, "method": "read_resource", "params": {"uri": "invalid://uri"}
+}

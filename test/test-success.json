@@ -1,0 +1,27 @@
+{
+    "jsonrpc": "2.0", "id": 1, "method": "list_resources"
+ }
+ {
+    "jsonrpc": "2.0", "id": 2, "method": "call_tool", "params": {"name": "add-note", "arguments": {"name": "meeting", "content": "Team sync at 2pm tomorrow"}}
+ }
+ {
+    "jsonrpc": "2.0", "id": 3, "method": "call_tool", "params": {"name": "add-note", "arguments": {"name": "todo", "content": "Buy groceries: milk, bread, eggs"}}
+ }
+ {
+    "jsonrpc": "2.0", "id": 4, "method": "list_resources"
+ }
+ {
+    "jsonrpc": "2.0", "id": 5, "method": "read_resource", "params": {"uri": "note://internal/meeting"}
+ }
+ {
+    "jsonrpc": "2.0", "id": 6, "method": "get_prompt", "params": {"name": "summarize-notes", "arguments": {"style": "brief"}}
+ }
+ {
+    "jsonrpc": "2.0", "id": 7, "method": "get_prompt", "params": {"name": "summarize-notes", "arguments": {"style": "detailed"}}
+ }
+ {
+    "jsonrpc": "2.0", "id": 8, "method": "list_prompts"
+ }
+ {
+    "jsonrpc": "2.0", "id": 9, "method": "list_tools"
+ }
