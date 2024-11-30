@@ -22,6 +22,7 @@ package server
 import (
     "encoding/json"
     "fmt"
+    "os"
     "strings"
 )
 
@@ -33,6 +34,7 @@ import (
 //   - ID: Request ID from the original request
 //   - Result: Array of available resources
 func (s *Server) handleListResources(req *RPCRequest) *RPCResponse {
+    fmt.Fprintf(os.Stderr, "Handling list_resources request\n")
     resources := s.ListResources()
     return &RPCResponse{
         JSONRPC: "2.0",
@@ -61,6 +63,7 @@ func (s *Server) handleReadResource(req *RPCRequest) *RPCResponse {
         URI string `json:"uri"` // Resource URI to read
     }
     if err := json.Unmarshal(req.Params, &params); err != nil {
+        fmt.Fprintf(os.Stderr, "Error unmarshaling read_resource params: %v\n", err)
         return newErrorResponse(req.ID, ErrInvalidParams, "invalid URI parameter", err)
     }
 
@@ -68,8 +71,10 @@ func (s *Server) handleReadResource(req *RPCRequest) *RPCResponse {
         return newErrorResponse(req.ID, ErrInvalidParams, "URI is required", nil)
     }
 
+    fmt.Fprintf(os.Stderr, "Reading resource: %s\n", params.URI)
     content, err := s.ReadResource(params.URI)
     if err != nil {
+        fmt.Fprintf(os.Stderr, "Error reading resource: %v\n", err)
         switch {
         case strings.Contains(err.Error(), "note not found"):
             return newErrorResponse(req.ID, ErrNotFound, "note not found", err)
@@ -95,6 +100,7 @@ func (s *Server) handleReadResource(req *RPCRequest) *RPCResponse {
 //   - ID: Request ID from the original request
 //   - Result: Array of available prompts
 func (s *Server) handleListPrompts(req *RPCRequest) *RPCResponse {
+    fmt.Fprintf(os.Stderr, "Handling list_prompts request\n")
     prompts := s.ListPrompts()
     return &RPCResponse{
         JSONRPC: "2.0",
@@ -124,6 +130,7 @@ func (s *Server) handleGetPrompt(req *RPCRequest) *RPCResponse {
         Arguments map[string]string `json:"arguments"` // Template arguments
     }
     if err := json.Unmarshal(req.Params, &params); err != nil {
+        fmt.Fprintf(os.Stderr, "Error unmarshaling get_prompt params: %v\n", err)
         return newErrorResponse(req.ID, ErrInvalidParams, "invalid prompt parameters", err)
     }
 
@@ -135,8 +142,10 @@ func (s *Server) handleGetPrompt(req *RPCRequest) *RPCResponse {
         params.Arguments = make(map[string]string)
     }
 
+    fmt.Fprintf(os.Stderr, "Getting prompt: %s with %d arguments\n", params.Name, len(params.Arguments))
     result, err := s.GetPrompt(params.Name, params.Arguments)
     if err != nil {
+        fmt.Fprintf(os.Stderr, "Error getting prompt: %v\n", err)
         if strings.Contains(err.Error(), "unknown prompt") {
             return newErrorResponse(req.ID, ErrNotFound, "prompt not found", err)
         }
@@ -158,6 +167,7 @@ func (s *Server) handleGetPrompt(req *RPCRequest) *RPCResponse {
 //   - ID: Request ID from the original request
 //   - Result: Array of available tools
 func (s *Server) handleListTools(req *RPCRequest) *RPCResponse {
+    fmt.Fprintf(os.Stderr, "Handling list_tools request\n")
     tools := s.ListTools()
     return &RPCResponse{
         JSONRPC: "2.0",
@@ -188,6 +198,7 @@ func (s *Server) handleCallTool(req *RPCRequest) *RPCResponse {
         Arguments map[string]interface{} `json:"arguments"` // Tool arguments
     }
     if err := json.Unmarshal(req.Params, &params); err != nil {
+        fmt.Fprintf(os.Stderr, "Error unmarshaling call_tool params: %v\n", err)
         return newErrorResponse(req.ID, ErrInvalidParams, "invalid tool parameters", err)
     }
 
@@ -199,8 +210,10 @@ func (s *Server) handleCallTool(req *RPCRequest) *RPCResponse {
         params.Arguments = make(map[string]interface{})
     }
 
+    fmt.Fprintf(os.Stderr, "Calling tool: %s with %d arguments\n", params.Name, len(params.Arguments))
     result, err := s.CallTool(params.Name, params.Arguments)
     if err != nil {
+        fmt.Fprintf(os.Stderr, "Error calling tool: %v\n", err)
         if strings.Contains(err.Error(), "unknown tool") {
             return newErrorResponse(req.ID, ErrNotFound, "tool not found", err)
         }
@@ -233,6 +246,8 @@ func (s *Server) handleRequest(req *RPCRequest) *RPCResponse {
     if req.Method == "" {
         return newErrorResponse(req.ID, ErrInvalidReq, "method is required", nil)
     }
+
+    fmt.Fprintf(os.Stderr, "Handling request for method: %s\n", req.Method)
 
     switch req.Method {
     case "list_resources":
@@ -276,6 +291,7 @@ func newErrorResponse(id interface{}, code int, message string, err error) *RPCR
     if err != nil {
         data = err.Error()
     }
+    fmt.Fprintf(os.Stderr, "Creating error response: [%d] %s - %v\n", code, message, err)
     return &RPCResponse{
         JSONRPC: "2.0",
         ID:      id,

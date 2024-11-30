@@ -10,17 +10,8 @@
 //
 //	$ notes-server
 //
-// Usage as a service:
-//
-//	$ notes-server install   # Install as a system service
-//	$ notes-server start     # Start the service
-//	$ notes-server stop      # Stop the service
-//	$ notes-server restart   # Restart the service
-//	$ notes-server uninstall # Remove the service
-//
 // Environment Variables:
 //   - LOG_LEVEL: Set logging level (debug, info, warn, error). Default: info
-//   - PORT: Server port number. Default: 8080
 //
 // Exit Codes:
 //   - 0: Successful execution
@@ -42,6 +33,9 @@ import (
 // The server will continue running until it receives a termination
 // signal (SIGTERM, SIGINT) or encounters a fatal error.
 func main() {
+    // Write all startup logging to stderr
+    fmt.Fprintf(os.Stderr, "Starting notes-server...\n")
+
     // Create a new server instance with the default name
     srv := server.NewServer("notes-server")
 

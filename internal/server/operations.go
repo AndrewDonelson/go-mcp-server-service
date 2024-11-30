@@ -7,6 +7,7 @@ import (
     "encoding/json"
     "fmt"
     "net/url"
+    "os"
 )
 
 // ListResources returns a slice of all available resources in the server.
@@ -21,6 +22,7 @@ func (s *Server) ListResources() []Resource {
     s.notesMap.RLock()
     defer s.notesMap.RUnlock()
 
+    fmt.Fprintf(os.Stderr, "Listing %d resources\n", len(s.notes))
     resources := make([]Resource, 0, len(s.notes))
     for name := range s.notes {
         resources = append(resources, Resource{
@@ -53,10 +55,12 @@ func (s *Server) ListResources() []Resource {
 func (s *Server) ReadResource(uri string) (string, error) {
     parsedURI, err := url.Parse(uri)
     if err != nil {
+        fmt.Fprintf(os.Stderr, "Failed to parse URI %s: %v\n", uri, err)
         return "", fmt.Errorf("invalid URI: %w", err)
     }
 
     if parsedURI.Scheme != "note" {
+        fmt.Fprintf(os.Stderr, "Unsupported URI scheme: %s\n", parsedURI.Scheme)
         return "", fmt.Errorf("unsupported URI scheme: %s", parsedURI.Scheme)
     }
 
@@ -65,11 +69,14 @@ func (s *Server) ReadResource(uri string) (string, error) {
         name = name[1:]
     }
 
+    fmt.Fprintf(os.Stderr, "Reading resource: %s\n", name)
+
     s.notesMap.RLock()
     content, ok := s.notes[name]
     s.notesMap.RUnlock()
 
     if !ok {
+        fmt.Fprintf(os.Stderr, "Note not found: %s\n", name)
         return "", fmt.Errorf("note not found: %s", name)
     }
 
@@ -80,6 +87,7 @@ func (s *Server) ReadResource(uri string) (string, error) {
 // Currently, it only supports the "summarize-notes" prompt, which creates
 // a summary of all notes with optional style configuration.
 func (s *Server) ListPrompts() []Prompt {
+    fmt.Fprintf(os.Stderr, "Listing available prompts\n")
     return []Prompt{{
         Name:        "summarize-notes",
         Description: "Creates a summary of all notes",
@@ -107,6 +115,8 @@ func (s *Server) ListPrompts() []Prompt {
 //     Arguments:
 //   - "style": Optional. Values: "brief" (default) or "detailed"
 func (s *Server) GetPrompt(name string, arguments map[string]string) (GetPromptResult, error) {
+    fmt.Fprintf(os.Stderr, "Getting prompt %s with arguments: %v\n", name, arguments)
+    
     if name != "summarize-notes" {
         return GetPromptResult{}, fmt.Errorf("unknown prompt: %s", name)
     }
@@ -128,6 +138,8 @@ func (s *Server) GetPrompt(name string, arguments map[string]string) (GetPromptR
     }
     s.notesMap.RUnlock()
 
+    fmt.Fprintf(os.Stderr, "Generated prompt with style: %s\n", style)
+
     return GetPromptResult{
         Description: "Summarize the current notes",
         Messages: []PromptMessage{{
@@ -144,6 +156,7 @@ func (s *Server) GetPrompt(name string, arguments map[string]string) (GetPromptR
 // Currently, it only supports the "add-note" tool, which allows adding
 // new notes to the server.
 func (s *Server) ListTools() []Tool {
+    fmt.Fprintf(os.Stderr, "Listing available tools\n")
     return []Tool{{
         Name:        "add-note",
         Description: "Add a new note",
@@ -177,23 +190,29 @@ func (s *Server) ListTools() []Tool {
 // Thread safety:
 // The function uses appropriate locking mechanisms when modifying the notes map.
 func (s *Server) CallTool(name string, arguments map[string]interface{}) ([]TextContent, error) {
+    fmt.Fprintf(os.Stderr, "Calling tool %s with arguments: %v\n", name, arguments)
+    
     if name != "add-note" {
         return nil, fmt.Errorf("unknown tool: %s", name)
     }
 
     noteName, ok := arguments["name"].(string)
     if !ok || noteName == "" {
+        fmt.Fprintf(os.Stderr, "Missing or invalid name argument\n")
         return nil, fmt.Errorf("missing or invalid name")
     }
 
     content, ok := arguments["content"].(string)
     if !ok || content == "" {
+        fmt.Fprintf(os.Stderr, "Missing or invalid content argument\n")
         return nil, fmt.Errorf("missing or invalid content")
     }
 
     s.notesMap.Lock()
     s.notes[noteName] = content
     s.notesMap.Unlock()
+
+    fmt.Fprintf(os.Stderr, "Added note '%s'\n", noteName)
 
     return []TextContent{{
         Type: "text",

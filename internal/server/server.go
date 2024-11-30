@@ -9,6 +9,7 @@ import (
     "fmt"
     "io"
     "os"
+    "sync"
 )
 
 // NewServer creates and initializes a new Server instance with the specified name.
@@ -65,9 +66,14 @@ func NewServer(name string) *Server {
 //	    log.Fatal(err)
 //	}
 func (s *Server) Run(ctx context.Context) error {
-    fmt.Fprintf(os.Stderr, "Notes Server running on stdio\n")
+    // Use stderr for logging
+    fmt.Fprintf(os.Stderr, "Notes Server starting on stdio...\n")
     
+    // Create encoders/decoders for stdin/stdout
     decoder := json.NewDecoder(os.Stdin)
+    
+    // Create a mutex for stdout to ensure thread-safe writing
+    var stdoutMutex sync.Mutex
     encoder := json.NewEncoder(os.Stdout)
 
     for {
@@ -84,21 +90,28 @@ func (s *Server) Run(ctx context.Context) error {
                     return nil
                 }
                 fmt.Fprintf(os.Stderr, "Error decoding request: %v\n", err)
-                if err := encoder.Encode(&RPCResponse{
+                
+                // Lock stdout while writing error response
+                stdoutMutex.Lock()
+                encodeErr := encoder.Encode(&RPCResponse{
                     JSONRPC: "2.0",
                     Error: &RPCError{
                         Code:    ErrParse,
                         Message: "parse error",
                         Data:    err.Error(),
                     },
-                }); err != nil {
-                    return fmt.Errorf("failed to encode error response: %w", err)
+                })
+                stdoutMutex.Unlock()
+                
+                if encodeErr != nil {
+                    return fmt.Errorf("failed to encode error response: %w", encodeErr)
                 }
                 return fmt.Errorf("failed to decode request: %w", err)
             }
 
             if req.JSONRPC != "2.0" {
-                if err := encoder.Encode(&RPCResponse{
+                stdoutMutex.Lock()
+                encodeErr := encoder.Encode(&RPCResponse{
                     JSONRPC: "2.0",
                     ID:      req.ID,
                     Error: &RPCError{
@@ -106,14 +119,18 @@ func (s *Server) Run(ctx context.Context) error {
                         Message: "invalid JSON-RPC version",
                         Data:    "expected version 2.0",
                     },
-                }); err != nil {
-                    return fmt.Errorf("failed to encode response: %w", err)
+                })
+                stdoutMutex.Unlock()
+                
+                if encodeErr != nil {
+                    return fmt.Errorf("failed to encode response: %w", encodeErr)
                 }
                 continue
             }
 
             if req.Method == "" {
-                if err := encoder.Encode(&RPCResponse{
+                stdoutMutex.Lock()
+                encodeErr := encoder.Encode(&RPCResponse{
                     JSONRPC: "2.0",
                     ID:      req.ID,
                     Error: &RPCError{
@@ -121,14 +138,24 @@ func (s *Server) Run(ctx context.Context) error {
                         Message: "method is required",
                         Data:    "empty method",
                     },
-                }); err != nil {
-                    return fmt.Errorf("failed to encode response: %w", err)
+                })
+                stdoutMutex.Unlock()
+                
+                if encodeErr != nil {
+                    return fmt.Errorf("failed to encode response: %w", encodeErr)
                 }
                 continue
             }
 
+            // Handle the request and get response
             response := s.handleRequest(&req)
-            if err := encoder.Encode(response); err != nil {
+            
+            // Lock stdout while writing response
+            stdoutMutex.Lock()
+            err := encoder.Encode(response)
+            stdoutMutex.Unlock()
+            
+            if err != nil {
                 return fmt.Errorf("failed to encode response: %w", err)
             }
         }

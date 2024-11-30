@@ -132,13 +132,13 @@ Configure the notes server in Claude Desktop's configuration file:
 }
 ```
 
-#### Release Configuration
+#### Release Configuration (Service Example)
 
 ```json
 {
   "mcpServers": {
     "notes-server": {
-      "command": "./bin/release/<platform>/notes-server",
+      "command": "./bin/release/<platform>/notes-service",
       "args": []
     }
   }
